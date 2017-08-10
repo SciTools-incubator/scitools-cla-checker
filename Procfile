@@ -1,1 +1,1 @@
-web: python -m cla_check
+web: python -m scitools_cla_checker.webapp
