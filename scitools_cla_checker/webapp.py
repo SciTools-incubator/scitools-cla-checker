@@ -1,4 +1,5 @@
 import datetime
+import logging
 import os
 
 import tornado.escape
@@ -11,11 +12,9 @@ class MainHandler(tornado.web.RequestHandler):
     def get(self):
         self.set_status(404)
         self.write_error(404)
-        return
-        self.write("Hello damp world ({})".format(datetime.datetime.now().isoformat()))
 
 
-class LintingHookHandler(tornado.web.RequestHandler):
+class WebhookHandler(tornado.web.RequestHandler):
     def post(self):
         headers = self.request.headers
         event = headers.get('X-GitHub-Event', None)
@@ -24,6 +23,9 @@ class LintingHookHandler(tornado.web.RequestHandler):
             self.write('pong')
         elif event == 'pull_request':
             body = tornado.escape.json_decode(self.request.body)
+            logging.info(body)
+            return
+
             repo_name = body['repository']['name']
             repo_url = body['repository']['clone_url']
             owner = body['repository']['owner']['login']
@@ -45,6 +47,7 @@ class LintingHookHandler(tornado.web.RequestHandler):
 def main():
     application = tornado.web.Application([
         (r"/", MainHandler),
+        (r"/webhook", WebhookHandler),
     ])
     http_server = tornado.httpserver.HTTPServer(application)
     PORT = os.environ.get('PORT', 8080)
