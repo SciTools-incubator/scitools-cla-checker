@@ -6,6 +6,7 @@ import tornado.escape
 import tornado.httpserver
 import tornado.gen
 import tornado.ioloop
+import tornado.log
 import tornado.web
 
 from . import update_pr
@@ -43,6 +44,7 @@ class WebhookHandler(tornado.web.RequestHandler):
 
 
 def main():
+    tornado.log.enable_pretty_logging()
     application = tornado.web.Application([
         (r"/", MainHandler),
         (r"/webhook", WebhookHandler),
