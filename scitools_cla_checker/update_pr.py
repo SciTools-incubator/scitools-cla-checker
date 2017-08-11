@@ -113,6 +113,7 @@ def check_pr(repo, number):
                'Accept': 'application/vnd.github.v3+json'}
     URL = ('https://api.github.com/repos/{}/pulls/{}/commits'
            ''.format(repo, number))
+    print(headers, URL)
     response = yield http_client.fetch(URL, method='GET',
                                        headers=headers)
     content = json.loads(response.body.decode())
@@ -139,7 +140,7 @@ def configure_default_client():
         defaults['proxy_port'] = int(defaults['proxy_port'])
 
     # Note: I had issues akin to https://stackoverflow.com/questions/21096436/ssl-backend-error-when-using-openssl
-    tornado.httpclient.AsyncHTTPClient.configure("tornado.curl_httpclient.CurlAsyncHTTPClient", defaults=defaults)
+    #tornado.httpclient.AsyncHTTPClient.configure("tornado.curl_httpclient.CurlAsyncHTTPClient", defaults=defaults)
 
 
 CONTRIBUTORS_DOC = 'https://raw.githubusercontent.com/SciTools/scitools.org.uk/gh-pages/contributors.json'
