@@ -4,8 +4,12 @@ import os
 
 import tornado.escape
 import tornado.httpserver
+import tornado.gen
 import tornado.ioloop
 import tornado.web
+
+from . import update_pr
+from __main__ import get_contributors
 
 
 class MainHandler(tornado.web.RequestHandler):
@@ -15,6 +19,7 @@ class MainHandler(tornado.web.RequestHandler):
 
 
 class WebhookHandler(tornado.web.RequestHandler):
+    @tornado.gen.coroutine
     def post(self):
         headers = self.request.headers
         event = headers.get('X-GitHub-Event', None)
@@ -32,13 +37,9 @@ class WebhookHandler(tornado.web.RequestHandler):
             pr_id = int(body['pull_request']['number'])
             is_open = body['pull_request']['state'] == 'open'
 
-            # Only do anything if we are working with conda-forge, and an open PR.
-            if is_open and owner == 'conda-forge':
-                lint_info = linting.compute_lint_message(owner, repo_name, pr_id,
-                                                         repo_name == 'staged-recipes')
-                if lint_info:
-                    msg = linting.comment_on_pr(owner, repo_name, pr_id, lint_info['message'])
-                    linting.set_pr_status(owner, repo_name, lint_info, target_url=msg.html_url)
+            if is_open and 'checker' in repo_name:
+                contribs = get_contributors()
+
         else:
             self.write('Unhandled event "{}".'.format(event))
             self.set_status(404)
