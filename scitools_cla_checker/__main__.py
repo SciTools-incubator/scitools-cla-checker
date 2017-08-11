@@ -3,7 +3,6 @@ import os
 from pprint import pprint
 import sys
 
-import requests
 from tornado import gen
 import tornado.httpclient
 from tornado.ioloop import IOLoop

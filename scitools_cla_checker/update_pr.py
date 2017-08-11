@@ -4,7 +4,6 @@ from pprint import pprint
 from pathlib import Path
 import sys
 
-import requests
 from tornado import gen
 import tornado.escape
 import tornado.httpclient
