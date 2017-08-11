@@ -11,14 +11,8 @@ import tornado.httpclient
 from tornado.ioloop import IOLoop
 
 
-
-
 def api_token():
-    token_file = Path(__file__).parent / 'token.txt'
-    if not token_file.exists():
-        raise IOError('Please create a token at github.com, and save it in {}'.format(token_file))
-
-    token = token_file.read_text().strip()
+    token = os.environ['TOKEN']
     return token
 
 
