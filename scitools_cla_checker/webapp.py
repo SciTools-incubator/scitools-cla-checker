@@ -37,7 +37,7 @@ class WebhookHandler(tornado.web.RequestHandler):
 
             # Do some sanity chceking
             if is_open and owner.lower() in ['scitools', 'scitools-incubator']:
-                yield check_pr('{}/{}'.format(owner, repo_name), pr_id)
+                yield update_pr.check_pr('{}/{}'.format(owner, repo_name), pr_id)
         else:
             self.write('Unhandled event "{}".'.format(event))
             self.set_status(404)

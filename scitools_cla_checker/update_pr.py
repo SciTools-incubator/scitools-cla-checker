@@ -9,7 +9,6 @@ import tornado.escape
 import tornado.httpclient
 from tornado.ioloop import IOLoop
 
-
 def api_token():
     token = os.environ['TOKEN']
     return token
@@ -20,6 +19,8 @@ CONTRIBUTORS_DOC = 'https://raw.githubusercontent.com/SciTools/scitools.org.uk/g
 
 token = api_token()
 
+# Without setting the user agent, github 403s us :(
+user_agent = 'scitools-cla-checker'
 
 @gen.coroutine
 def get_pr_sha(repo, number):
@@ -28,6 +29,7 @@ def get_pr_sha(repo, number):
                'Accept': 'application/vnd.github.v3+json'}
     URL = 'https://api.github.com/repos/{}/pulls/{}'.format(repo, number)
     response = yield http_client.fetch(URL, method='GET',
+                                       user_agent=user_agent,
                                        headers=headers)
     if response.error:
         raise RuntimeError(response.body)
@@ -57,6 +59,7 @@ def update_pr_no_cla(repo, number, logins_without_cla=None):
     }
 
     response = yield http_client.fetch(URL, body=json.dumps(content).encode(),
+                                       user_agent=user_agent,
                                        method='POST',
                                        headers=headers)
     if response.error:
@@ -68,6 +71,7 @@ def update_pr_no_cla(repo, number, logins_without_cla=None):
     URL = 'https://api.github.com/repos/{}/issues/{}/labels'.format(repo, number)
     content = ['Blocked: CLA needed']
     response = yield http_client.fetch(URL, body=json.dumps(content).encode(), method='POST',
+                                       user_agent=user_agent,
                                        headers=headers)
     if response.error:
         raise RuntimeError(response.body)
@@ -84,6 +88,7 @@ def update_pr_cla_exists(repo, number):
            ''.format(repo, number, tornado.escape.url_escape('Blocked: CLA needed', plus=False)))
     try:
         response = yield http_client.fetch(URL, method='DELETE',
+                                       user_agent=user_agent,
                                            headers=headers)
     except tornado.httpclient.HTTPError:
         pass
@@ -100,6 +105,7 @@ def update_pr_cla_exists(repo, number):
     }
 
     response = yield http_client.fetch(URL, body=json.dumps(content).encode(), method='POST',
+                                       user_agent=user_agent,
                                        headers=headers)
     if response.error:
         raise RuntimeError(response.body)
@@ -113,10 +119,11 @@ def check_pr(repo, number):
                'Accept': 'application/vnd.github.v3+json'}
     URL = ('https://api.github.com/repos/{}/pulls/{}/commits'
            ''.format(repo, number))
-    print(headers, URL)
     response = yield http_client.fetch(URL, method='GET',
-                                       headers=headers)
+                                       user_agent=user_agent,
+                                       headers=headers, raise_error=False)
     content = json.loads(response.body.decode())
+
     authors = {commit['author']['login'] for commit in content}
 
     cla_signatories = yield get_contributors()
@@ -131,7 +138,7 @@ def check_pr(repo, number):
 
 
 def configure_default_client():
-    defaults = {}
+    default = {}
     http_proxy = os.environ.get('http_proxy')
     if http_proxy:
         if http_proxy[:7] == "http://":
@@ -140,7 +147,7 @@ def configure_default_client():
         defaults['proxy_port'] = int(defaults['proxy_port'])
 
     # Note: I had issues akin to https://stackoverflow.com/questions/21096436/ssl-backend-error-when-using-openssl
-    #tornado.httpclient.AsyncHTTPClient.configure("tornado.curl_httpclient.CurlAsyncHTTPClient", defaults=defaults)
+    tornado.httpclient.AsyncHTTPClient.configure("tornado.curl_httpclient.CurlAsyncHTTPClient", defaults=defaults)
 
 
 CONTRIBUTORS_DOC = 'https://raw.githubusercontent.com/SciTools/scitools.org.uk/gh-pages/contributors.json'
