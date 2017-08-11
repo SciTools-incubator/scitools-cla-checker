@@ -162,6 +162,8 @@ def get_contributors():
     content = json.loads(response.body.decode())
     signatures = sorted([person['profile_name']
                          for person in content['contributors']])
+    # This should be part of the contributors.json.
+    signatures.extend(['pp-mo', 'bjlittle'])
     return signatures
 
 
