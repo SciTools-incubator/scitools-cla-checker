@@ -6,10 +6,10 @@ import tornado.escape
 import tornado.httpserver
 import tornado.gen
 import tornado.ioloop
+import tornado.log
 import tornado.web
 
 from . import update_pr
-from __main__ import get_contributors
 
 
 class MainHandler(tornado.web.RequestHandler):
@@ -28,8 +28,6 @@ class WebhookHandler(tornado.web.RequestHandler):
             self.write('pong')
         elif event == 'pull_request':
             body = tornado.escape.json_decode(self.request.body)
-            logging.info(body)
-            return
 
             repo_name = body['repository']['name']
             repo_url = body['repository']['clone_url']
@@ -37,15 +35,16 @@ class WebhookHandler(tornado.web.RequestHandler):
             pr_id = int(body['pull_request']['number'])
             is_open = body['pull_request']['state'] == 'open'
 
-            if is_open and 'checker' in repo_name:
-                contribs = get_contributors()
-
+            # Do some sanity chceking
+            if is_open and owner.lower() in ['scitools', 'scitools-incubator']:
+                yield update_pr.check_pr('{}/{}'.format(owner, repo_name), pr_id)
         else:
             self.write('Unhandled event "{}".'.format(event))
             self.set_status(404)
 
 
 def main():
+    tornado.log.enable_pretty_logging()
     application = tornado.web.Application([
         (r"/", MainHandler),
         (r"/webhook", WebhookHandler),
