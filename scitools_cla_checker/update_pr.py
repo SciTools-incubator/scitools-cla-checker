@@ -31,8 +31,6 @@ def get_pr_sha(repo, number):
     response = yield http_client.fetch(URL, method='GET',
                                        user_agent=user_agent,
                                        headers=headers)
-    if response.error:
-        raise RuntimeError(response.body)
     content = json.loads(response.body.decode())
     return content['head']['sha']
 
@@ -62,8 +60,6 @@ def update_pr_no_cla(repo, number, logins_without_cla=None):
                                        user_agent=user_agent,
                                        method='POST',
                                        headers=headers)
-    if response.error:
-        raise RuntimeError(response.body)
     content = json.loads(response.body.decode())
 
     headers = {'Authorization': 'token {}'.format(token),
@@ -73,8 +69,6 @@ def update_pr_no_cla(repo, number, logins_without_cla=None):
     response = yield http_client.fetch(URL, body=json.dumps(content).encode(), method='POST',
                                        user_agent=user_agent,
                                        headers=headers)
-    if response.error:
-        raise RuntimeError(response.body)
     content = json.loads(response.body.decode())
 
 
@@ -107,8 +101,6 @@ def update_pr_cla_exists(repo, number):
     response = yield http_client.fetch(URL, body=json.dumps(content).encode(), method='POST',
                                        user_agent=user_agent,
                                        headers=headers)
-    if response.error:
-        raise RuntimeError(response.body)
 
 
 @gen.coroutine
@@ -121,9 +113,8 @@ def check_pr(repo, number):
            ''.format(repo, number))
     response = yield http_client.fetch(URL, method='GET',
                                        user_agent=user_agent,
-                                       headers=headers, raise_error=False)
+                                       headers=headers)
     content = json.loads(response.body.decode())
-
     authors = {commit['author']['login'] for commit in content}
 
     cla_signatories = yield get_contributors()
@@ -138,7 +129,7 @@ def check_pr(repo, number):
 
 
 def configure_default_client():
-    default = {}
+    defaults = {}
     http_proxy = os.environ.get('http_proxy')
     if http_proxy:
         if http_proxy[:7] == "http://":
@@ -157,8 +148,6 @@ CONTRIBUTORS_DOC = 'https://raw.githubusercontent.com/SciTools/scitools.org.uk/g
 def get_contributors():
     http_client = tornado.httpclient.AsyncHTTPClient()
     response = yield http_client.fetch(CONTRIBUTORS_DOC)
-    if response.error:
-        raise ValueError('Unable to fetch contributors.json')
     content = json.loads(response.body.decode())
     signatures = sorted([person['profile_name']
                          for person in content['contributors']])
