@@ -1,5 +1,3 @@
-import datetime
-import logging
 import os
 
 import tornado.escape
@@ -30,14 +28,14 @@ class WebhookHandler(tornado.web.RequestHandler):
             body = tornado.escape.json_decode(self.request.body)
 
             repo_name = body['repository']['name']
-            repo_url = body['repository']['clone_url']
             owner = body['repository']['owner']['login']
             pr_id = int(body['pull_request']['number'])
             is_open = body['pull_request']['state'] == 'open'
 
             # Do some sanity chceking
             if is_open and owner.lower() in ['scitools', 'scitools-incubator']:
-                yield update_pr.check_pr('{}/{}'.format(owner, repo_name), pr_id)
+                yield update_pr.check_pr('{}/{}'.format(owner, repo_name),
+                                         pr_id)
         else:
             self.write('Unhandled event "{}".'.format(event))
             self.set_status(404)
