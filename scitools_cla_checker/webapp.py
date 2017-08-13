@@ -1,3 +1,6 @@
+import hashlib
+import hmac
+import logging
 import os
 
 import tornado.escape
@@ -21,6 +24,18 @@ class WebhookHandler(tornado.web.RequestHandler):
     def post(self):
         headers = self.request.headers
         event = headers.get('X-GitHub-Event', None)
+
+        hmac_digest = headers.get('X-Hub-Signature', None)
+        webhook_secret = os.environ['WEBHOOK_SECRET'].encode()
+        # Compute the payload's hmac digest.
+        expected_hmac = hmac.new(
+                webhook_secret, self.request.body, hashlib.sha1).hexdigest()
+        expected_digest = 'sha1={}'.format(expected_hmac.hexdigest())
+
+        if hmac_digest != expected_digest:
+            logging.warning('HMAC FAIL: expected: {}; got: {};'
+                            ''.format(expected_digest, hmac_digest))
+            self.set_status(403)
 
         if event == 'ping':
             self.write('pong')
