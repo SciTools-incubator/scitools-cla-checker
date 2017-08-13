@@ -30,7 +30,7 @@ class WebhookHandler(tornado.web.RequestHandler):
         # Compute the payload's hmac digest.
         expected_hmac = hmac.new(
                 webhook_secret, self.request.body, hashlib.sha1).hexdigest()
-        expected_digest = 'sha1={}'.format(expected_hmac.hexdigest())
+        expected_digest = 'sha1={}'.format(expected_hmac)
 
         if hmac_digest != expected_digest:
             logging.warning('HMAC FAIL: expected: {}; got: {};'
