@@ -120,6 +120,30 @@ def update_pr_cla_exists(repo, number):
 
 
 @gen.coroutine
+def update_pr_failure(repo, number, message):
+    http_client = tornado.httpclient.AsyncHTTPClient()
+
+    headers = {'Authorization': 'token {}'.format(TOKEN),
+               'Accept': 'application/vnd.github.v3+json'}
+
+    # Get the SHA of the PR's HEAD, this is where we attach the status.
+    sha = yield get_pr_sha(repo, number)
+
+    headers = {'Authorization': 'token {}'.format(TOKEN),
+               'Accept': 'application/vnd.github.v3+json'}
+    URL = 'https://api.github.com/repos/{}/statuses/{}'.format(repo, sha)
+    content = {
+      "state": "error",
+      "description": message,
+      "context": "SciTools-CLA-checker"
+    }
+
+    yield http_client.fetch(
+            URL, body=json.dumps(content).encode(),
+            method='POST', user_agent=user_agent, headers=headers)
+
+
+@gen.coroutine
 def check_pr(repo, number):
     """
     Check that the given PR has a CLA signatory for each commit.
@@ -138,7 +162,18 @@ def check_pr(repo, number):
                                        user_agent=user_agent,
                                        headers=headers)
     content = json.loads(response.body.decode())
-    authors = {commit['author']['login'] for commit in content}
+
+    # Get GitHub logins from the commit authors. If we can't get logins,
+    # the commits haven't been configured properly.
+    authors = set()
+    for commit in content:
+        author = commit['author']
+        if author is None:
+            yield update_pr_failure(
+                repo, number, message=('Unable to identify authors for some '
+                                       'of the PRs commits.'))
+            return
+        authors.add(commit['author']['login'])
 
     cla_signatories = yield get_contributors()
 
