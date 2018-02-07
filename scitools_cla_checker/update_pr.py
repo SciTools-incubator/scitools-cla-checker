@@ -192,7 +192,7 @@ def get_contributors():
 
     """
     contrib_json = ('https://raw.githubusercontent.com/SciTools/'
-                    'scitools.org.uk/gh-pages/contributors.json')
+                    'scitools.org.uk/master/contributors.json')
     http_client = tornado.httpclient.AsyncHTTPClient()
     response = yield http_client.fetch(contrib_json)
     content = json.loads(response.body.decode())
