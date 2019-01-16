@@ -40,6 +40,12 @@ Updating a pull request's CLA status and label from the command line may be done
 Note: This will set a GitHub status of either failure or success, and if failure, add the label "Blocked: CLA needed"
 
 
+Checking an entire repository for CLA coverage (no equivalent webservice)
+
+```
+>>> python -m scitools_cla_checker.check_repo SciTools/iris
+```
+
 ## Webapp Usage
 
 This tool has been developed primarily to run as a web application that is triggered each time a pull request is modified.
