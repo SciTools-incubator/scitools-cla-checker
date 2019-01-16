@@ -198,7 +198,15 @@ def get_contributors():
     content = json.loads(response.body.decode())
     signatures = sorted([person['profile_name']
                          for person in content['contributors']])
-    return signatures
+
+    v4_json = (
+            'https://script.google.com/macros/s/'
+            'AKfycbwqZ0JLlOKJEcvYUYFXo77o6nux9tSHvOJISUnk3yHi-Bk0Qanz/exec')
+    response = yield http_client.fetch(v4_json)
+    content = json.loads(response.body.decode())
+    v4_signatures = sorted(content['signatories'])
+
+    return sorted(signatures + v4_signatures)
 
 
 def configure_default_client():
