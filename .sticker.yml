@@ -1,4 +1,0 @@
----
-linters:
-    pep8:
-        python: 3
